@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cathedral</title>
+<style>
+:root{--bg:#ffffff;--mute:#9a9aa3;color-scheme:light;box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:400 .8rem/1.4 system-ui,sans-serif}
+body{touch-action:none;cursor:grab}
+body:active{cursor:grabbing}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.t{position:fixed;left:0;right:0;text-align:center;color:var(--mute);pointer-events:none;padding:0 1rem}
+#msg{top:50%;transform:translateY(-50%)}
+#credit{bottom:calc(.8rem + env(safe-area-inset-bottom,0px))}
+</style>
+</head>
+<body>
+<div class="t" id="msg">Loading scan…</div>
+<div class="t" id="credit"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+/* Credit line shown at the bottom, e.g. "Cologne Cathedral by AUTHOR, CC BY 4.0" */
+const CREDIT="";
+const msg=document.getElementById("msg");document.getElementById("credit").textContent=CREDIT;
+try{
+const T=THREE,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches,dpr=Math.min(devicePixelRatio,2);
+const r=new T.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(dpr);
+r.domElement.setAttribute("role","img");r.domElement.setAttribute("aria-label","A 3D scan of Cologne Cathedral with an eye hovering in front of it, which follows your pointer");
+document.body.appendChild(r.domElement);
+const scene=new T.Scene(),cam=new T.PerspectiveCamera(35,1,.1,100);
+scene.add(new T.HemisphereLight(0xffffff,0xe6dfd3,.95));
+const sun=new T.DirectionalLight(0xffffff,.8);sun.position.set(4,9,6);scene.add(sun);
+const g=new T.Group();scene.add(g);
+const eye=new T.Group();
+const S=(geo,c,ro=.35)=>new T.Mesh(geo,new T.MeshStandardMaterial({color:c,roughness:ro}));
+const sc=S(new T.SphereGeometry(.3,40,20),0xffffff);sc.scale.set(1.3,.75,.35);eye.add(sc);
+const ring=S(new T.TorusGeometry(.3,.014,8,64),0x1a1a22,.6);ring.scale.set(1.3,.75,1);ring.position.z=.01;eye.add(ring);
+const iris=new T.Group();eye.add(iris);
+const ir=S(new T.SphereGeometry(.17,32,16),0x2b4a7a,.3);ir.scale.z=.25;ir.position.z=.09;iris.add(ir);
+const pu=S(new T.SphereGeometry(.08,24,12),0x0a0a0f,.2);pu.scale.z=.25;pu.position.z=.12;iris.add(pu);
+
+new T.GLTFLoader().load("cathedral.glb",gltf=>{
+ const model=gltf.scene,pre=new T.Group();pre.add(model);
+ let main=null;model.traverse(o=>{if(!o.isMesh)return;if(o.geometry.attributes.color){o.visible=false;return}main=o});
+ const tex=main.material.map,H=5.2,box=new T.Box3();
+ pre.updateMatrixWorld(true);box.setFromObject(main);model.scale.setScalar(H/(box.max.y-box.min.y));
+ pre.updateMatrixWorld(true);box.setFromObject(main);const c=box.getCenter(new T.Vector3());model.position.set(-c.x,-box.min.y,-c.z);
+ pre.updateMatrixWorld(true);box.setFromObject(main);
+ /* read the photo texture so every point gets its true colour */
+ const im=tex.image,W=im.width,Hh=im.height,cv=document.createElement("canvas");cv.width=W;cv.height=Hh;
+ const cx=cv.getContext("2d");cx.drawImage(im,0,0);const px=cx.getImageData(0,0,W,Hh).data;
+ const pa=main.geometry.attributes.position,ua=main.geometry.attributes.uv,step=innerWidth<700?3:2,n=Math.ceil(pa.count/step),P=new Float32Array(n*3),C=new Float32Array(n*3),v=new T.Vector3();
+ for(let i=0,j=0;i<pa.count;i+=step,j++){v.fromBufferAttribute(pa,i).applyMatrix4(main.matrixWorld);P[j*3]=v.x;P[j*3+1]=v.y;P[j*3+2]=v.z;
+  const x=Math.min(W-1,Math.floor(ua.getX(i)*W)),y=Math.min(Hh-1,Math.floor(ua.getY(i)*Hh)),k=(y*W+x)*4;
+  C[j*3]=Math.min(1,px[k]/255*1.05);C[j*3+1]=Math.min(1,px[k+1]/255*1.05);C[j*3+2]=Math.min(1,px[k+2]/255*1.05)}
+ /* the mesh stays as an invisible white shell so dots behind it are hidden */
+ main.material=new T.MeshBasicMaterial({color:0xffffff,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+ g.add(model);
+ const pg=new T.BufferGeometry();pg.setAttribute("position",new T.BufferAttribute(P,3));pg.setAttribute("color",new T.BufferAttribute(C,3));
+ g.add(new T.Points(pg,new T.PointsMaterial({size:.016*dpr,vertexColors:true,sizeAttenuation:true})));
+ /* the eye hovers in front of the west facade, between the two towers (facade faces +x) */
+ eye.position.set(box.max.x+.25,box.min.y+H*.5,(box.min.z+box.max.z)/2);eye.rotation.y=Math.PI/2;eye.scale.setScalar(1.25);g.add(eye);
+ msg.remove();
+},undefined,()=>{msg.textContent="The scan could not load. Open this page from its web address, with cathedral.glb in the same folder."});
+
+function size(){const w=innerWidth,h=innerHeight,a=w/h;r.setSize(w,h);cam.aspect=a;cam.updateProjectionMatrix();
+ const d=Math.max(13,12/a);cam.position.set(0,4.6,d);cam.lookAt(0,2.5,0)}
+size();addEventListener("resize",size);
+let ry=-Math.PI/2,vel=0,drag=false,lx=0,nx=0,ny=0;
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+addEventListener("pointerdown",e=>{drag=true;lx=e.clientX});
+addEventListener("pointermove",e=>{nx=e.clientX/innerWidth*2-1;ny=e.clientY/innerHeight*2-1;if(!drag)return;const dx=e.clientX-lx;lx=e.clientX;ry+=dx*.01;vel=dx*.01});
+addEventListener("pointerup",()=>drag=false);addEventListener("pointercancel",()=>drag=false);
+(function loop(){if(!drag){vel*=.95;ry+=vel+(reduce?0:.003)}g.rotation.y=ry;
+ iris.position.x+=(cl(nx*.25*Math.cos(ry+Math.PI/2),-.14,.14)-iris.position.x)*.15;iris.position.y+=(cl(-ny*.1,-.04,.04)-iris.position.y)*.15;
+ r.render(scene,cam);requestAnimationFrame(loop)})();
+}catch(e){msg.textContent="Your browser could not start 3D graphics."}
+</script>
+</body>
+</html>
