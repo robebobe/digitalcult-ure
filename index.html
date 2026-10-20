@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cathedral</title>
+<title>The Digital CULT-ure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#ffffff;--mute:#9a9aa3;color-scheme:light;box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:400 .8rem/1.4 system-ui,sans-serif}
@@ -13,9 +15,27 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .t{position:fixed;left:0;right:0;text-align:center;color:var(--mute);pointer-events:none;padding:0 1rem}
 #msg{top:50%;transform:translateY(-50%)}
 #credit{bottom:calc(.8rem + env(safe-area-inset-bottom,0px))}
+:root{--ink:#26324f;--blue:#2f6bff;--soft:"Quicksand","Nunito","Varela Round","Trebuchet MS",system-ui,sans-serif}
+#title{position:fixed;z-index:3;top:calc(1.1rem + env(safe-area-inset-top,0px));left:1.4rem;margin:0;font:600 clamp(1.05rem,3.4vw,1.45rem)/1.1 var(--soft);letter-spacing:.01em;color:var(--ink);pointer-events:none}
+#title b{font-weight:700;color:var(--blue)}
+#enter{position:fixed;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);padding:.95rem 1.7rem;border-radius:99px;border:1.5px solid rgba(47,107,255,.55);background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);font:600 1rem/1 var(--soft);letter-spacing:.02em;box-shadow:0 8px 30px rgba(47,107,255,.18);cursor:pointer;transition:background .25s,box-shadow .25s,opacity .5s,transform .25s}
+#enter:hover{background:#fff;box-shadow:0 10px 36px rgba(47,107,255,.32);transform:translate(-50%,-50%) scale(1.04)}
+#enter[hidden]{display:none}
+#enter.gone{opacity:0;pointer-events:none}
+#title.dim{opacity:1}
+#veil{position:fixed;inset:0;z-index:2;background:#fff;opacity:0;pointer-events:none}
+#page{position:fixed;inset:0;z-index:4;background:#fff;display:none;overflow:auto;touch-action:auto;cursor:auto}
+#page.on{display:block;animation:pin .8s ease both}
+@keyframes pin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){#page.on{animation:none}}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 </style>
 </head>
 <body>
+<h1 id="title">The Digital <b>CULT</b>-ure</h1>
+<button id="enter" type="button" hidden>Click to enter the cult</button>
+<div id="veil"></div>
+<main id="page" aria-label="Inside the cult"></main>
 <div class="t" id="msg">Loading scan…</div>
 <div class="t" id="credit"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -23,7 +43,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <script>
 /* Credit line shown at the bottom, e.g. "Cologne Cathedral by AUTHOR, CC BY 4.0" */
 const CREDIT="";
-const msg=document.getElementById("msg");document.getElementById("credit").textContent=CREDIT;
+const msg=document.getElementById("msg"),enterBtn=document.getElementById("enter"),veil=document.getElementById("veil"),page=document.getElementById("page"),titleEl=document.getElementById("title");document.getElementById("credit").textContent=CREDIT;
 try{
 const T=THREE,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches,dpr=Math.min(devicePixelRatio,2);
 const r=new T.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(dpr);
@@ -73,18 +93,35 @@ new T.GLTFLoader().load("cathedral.glb",gltf=>{
  g.add(new T.Points(pg,new T.PointsMaterial({size:.016*dpr,vertexColors:true,sizeAttenuation:true})));
  /* the eye hovers in front of the west facade, between the two towers (facade faces +x) */
  eye.position.set(box.max.x+.25,box.min.y+H*.5,(box.min.z+box.max.z)/2);eye.rotation.y=Math.PI/2;eye.scale.setScalar(1.25);g.add(eye);
- msg.remove();
+ msg.remove();enterBtn.hidden=false;
 },undefined,()=>{msg.textContent="The scan could not load. Open this page from its web address, with cathedral.glb in the same folder."});
 
+let baseD=13,zoom=0;
+const lerp=(a,b,t)=>a+(b-a)*t;
+function placeCam(){cam.position.set(0,lerp(4.6,2.6,zoom),lerp(baseD,.6,zoom));cam.lookAt(0,lerp(2.5,2.6,zoom),0)}
 function size(){const w=innerWidth,h=innerHeight,a=w/h;r.setSize(w,h);cam.aspect=a;cam.updateProjectionMatrix();
- const d=Math.max(13,12/a);cam.position.set(0,4.6,d);cam.lookAt(0,2.5,0)}
+ baseD=Math.max(13,12/a);placeCam()}
 size();addEventListener("resize",size);
 let ry=-Math.PI/2,vel=0,drag=false,lx=0,nx=0,ny=0;
 const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-addEventListener("pointerdown",e=>{drag=true;lx=e.clientX});
-addEventListener("pointermove",e=>{nx=e.clientX/innerWidth*2-1;ny=e.clientY/innerHeight*2-1;if(!drag)return;const dx=e.clientX-lx;lx=e.clientX;ry+=dx*.01;vel=dx*.01});
+let entering=false,done=false;
+enterBtn.addEventListener("pointerdown",e=>e.stopPropagation());
+addEventListener("pointerdown",e=>{if(entering)return;drag=true;lx=e.clientX});
+addEventListener("pointermove",e=>{if(entering)return;nx=e.clientX/innerWidth*2-1;ny=e.clientY/innerHeight*2-1;if(!drag)return;const dx=e.clientX-lx;lx=e.clientX;ry+=dx*.01;vel=dx*.01});
 addEventListener("pointerup",()=>drag=false);addEventListener("pointercancel",()=>drag=false);
-(function loop(){if(!drag){vel*=.95;ry+=vel+(reduce?0:.003)}g.rotation.y=ry;
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+let t0=0,ry0=0,ry1=0;
+const DUR=reduce?1:2600;
+enterBtn.addEventListener("click",()=>{if(entering)return;entering=true;drag=false;enterBtn.classList.add("gone");
+ t0=performance.now();ry0=ry;ry1=Math.round((ry+Math.PI/2)/(Math.PI*2))*Math.PI*2-Math.PI/2;vel=0;nx=0;ny=0});
+function finish(){done=true;r.domElement.style.display="none";page.classList.add("on");page.focus&&page.setAttribute("tabindex","-1");page.focus({preventScroll:true})}
+(function loop(){
+ if(done)return;
+ if(entering){const t=Math.min(1,(performance.now()-t0)/DUR),e=ease(t);ry=lerp(ry0,ry1,Math.min(1,e*1.6));zoom=e;placeCam();
+  veil.style.opacity=String(Math.max(0,(t-.5)/.45));titleEl.style.opacity=String(Math.max(.0,1-t*3)+0);
+  if(t>=1){veil.style.opacity="1";finish();return}}
+ else if(!drag){vel*=.95;ry+=vel+(reduce?0:.003)}
+ g.rotation.y=ry;
  iris.position.x+=(cl(nx*.25*Math.cos(ry+Math.PI/2),-.14,.14)-iris.position.x)*.15;iris.position.y+=(cl(-ny*.1,-.04,.04)-iris.position.y)*.15;
  r.render(scene,cam);requestAnimationFrame(loop)})();
 }catch(e){msg.textContent="Your browser could not start 3D graphics."}
