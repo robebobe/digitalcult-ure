@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Digital CULT-ure</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#ffffff;--mute:#9a9aa3;color-scheme:light;box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:400 .8rem/1.4 system-ui,sans-serif}
@@ -15,11 +15,12 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .t{position:fixed;left:0;right:0;text-align:center;color:var(--mute);pointer-events:none;padding:0 1rem}
 #msg{top:50%;transform:translateY(-50%)}
 #credit{bottom:calc(.8rem + env(safe-area-inset-bottom,0px))}
-:root{--ink:#26324f;--blue:#2f6bff;--soft:"Quicksand","Nunito","Varela Round","Trebuchet MS",system-ui,sans-serif}
-#title{position:fixed;z-index:3;top:calc(1.1rem + env(safe-area-inset-top,0px));left:1.4rem;margin:0;font:600 clamp(1.05rem,3.4vw,1.45rem)/1.1 var(--soft);letter-spacing:.01em;color:var(--ink);pointer-events:none}
-#title b{font-weight:700;color:var(--blue)}
-#enter{position:fixed;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);padding:.95rem 1.7rem;border-radius:99px;border:1.5px solid rgba(47,107,255,.55);background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);font:600 1rem/1 var(--soft);letter-spacing:.02em;box-shadow:0 8px 30px rgba(47,107,255,.18);cursor:pointer;transition:background .25s,box-shadow .25s,opacity .5s,transform .25s}
-#enter:hover{background:#fff;box-shadow:0 10px 36px rgba(47,107,255,.32);transform:translate(-50%,-50%) scale(1.04)}
+:root{--ink:#26324f;--blue:#2f6bff;--title:"Minion 3","Minion Pro","Crimson Pro",Georgia,serif;--pix:"Pixel Operator Mono","PixelOperatorMono","VT323",ui-monospace,monospace}
+@font-face{font-family:"PixelOperatorMono";src:local("Pixel Operator Mono"),url("PixelOperatorMono.ttf") format("truetype");font-display:swap}
+#title{position:fixed;z-index:3;top:calc(1.2rem + env(safe-area-inset-top,0px));left:1.6rem;margin:0;font:500 clamp(1.9rem,6.4vw,3.4rem)/1.05 var(--title);letter-spacing:-.005em;color:var(--ink);pointer-events:none}
+#title b{font-weight:600;color:var(--blue)}
+#enter{position:fixed;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);padding:.6rem .8rem;border:0;background:none;color:var(--ink);font:400 clamp(1.15rem,3.6vw,1.5rem)/1.1 var(--pix);letter-spacing:.02em;text-shadow:0 0 6px #fff,0 0 12px #fff,0 0 18px #fff;cursor:pointer;white-space:nowrap;transition:color .2s,opacity .5s}
+#enter:hover{color:var(--blue)}
 #enter[hidden]{display:none}
 #enter.gone{opacity:0;pointer-events:none}
 #title.dim{opacity:1}
@@ -33,7 +34,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 </head>
 <body>
 <h1 id="title">The Digital <b>CULT</b>-ure</h1>
-<button id="enter" type="button" hidden>Click to enter the cult</button>
+<button id="enter" type="button" hidden>(Click to enter the cult)</button>
 <div id="veil"></div>
 <main id="page" aria-label="Inside the cult"></main>
 <div class="t" id="msg">Loading scan…</div>
