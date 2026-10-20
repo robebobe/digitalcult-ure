@@ -36,7 +36,7 @@ const g=new T.Group();scene.add(g);
 const eye=new T.Group(),iris=new T.Group();eye.add(iris);
 /* the eye is drawn as blue dots, like the cathedral scan */
 const shell=new T.MeshBasicMaterial({color:0xffffff,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}),
- eyeDots=new T.PointsMaterial({size:.016*dpr,vertexColors:true,sizeAttenuation:true}),EL=new T.Vector3(.35,.85,.55).normalize();
+ eyeDots=new T.PointsMaterial({size:.02*dpr,vertexColors:true,sizeAttenuation:true}),EL=new T.Vector3(.35,.85,.55).normalize();
 function dots(geo,hex,parent,x,y,z,sx,sy,sz,d){
  const m=new T.Mesh(geo,shell);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.updateMatrix();parent.add(m);
  const base=new T.Color(hex),gg=geo.index?geo.toNonIndexed():geo,p=gg.attributes.position,P=[],C=[],A=new T.Vector3(),B=new T.Vector3(),Q=new T.Vector3(),E1=new T.Vector3(),E2=new T.Vector3(),N=new T.Vector3();
@@ -47,10 +47,10 @@ function dots(geo,hex,parent,x,y,z,sx,sy,sz,d){
    P.push(A.x+E1.x*u+E2.x*v+N.x*o,A.y+E1.y*u+E2.y*v+N.y*o,A.z+E1.z*u+E2.z*v+N.z*o);
    C.push(Math.min(1,base.r*sh*w),Math.min(1,base.g*sh*w),Math.min(1,base.b*sh*w))}}
  const pg=new T.BufferGeometry();pg.setAttribute("position",new T.Float32BufferAttribute(P,3));pg.setAttribute("color",new T.Float32BufferAttribute(C,3));parent.add(new T.Points(pg,eyeDots))}
-dots(new T.SphereGeometry(.3,40,20),0xbcd6ff,eye,0,0,0,1.3,.75,.35,6000);
-dots(new T.TorusGeometry(.3,.014,8,64),0x1d3f91,eye,0,0,.01,1.3,.75,1,6000);
-dots(new T.SphereGeometry(.17,32,16),0x2f6bff,iris,0,0,.09,1,1,.25,7000);
-dots(new T.SphereGeometry(.08,24,12),0x0a1a4a,iris,0,0,.12,1,1,.25,9000);
+dots(new T.SphereGeometry(.3,40,20),0xbcd6ff,eye,0,0,0,1.3,.75,.35,1100);
+dots(new T.TorusGeometry(.3,.014,8,64),0x1d3f91,eye,0,0,.01,1.3,.75,1,2200);
+dots(new T.SphereGeometry(.17,32,16),0x2f6bff,iris,0,0,.09,1,1,.25,1600);
+dots(new T.SphereGeometry(.08,24,12),0x0a1a4a,iris,0,0,.12,1,1,.25,2400);
 
 new T.GLTFLoader().load("cathedral.glb",gltf=>{
  const model=gltf.scene,pre=new T.Group();pre.add(model);
