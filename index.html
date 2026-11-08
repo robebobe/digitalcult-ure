@@ -529,10 +529,10 @@ function css() {
 .dc-hud{display:none;position:fixed;left:0;right:0;top:calc(4.4rem + env(safe-area-inset-top,0px));text-align:center;font:400 .95rem/1.4 var(--dc-pix);color:var(--dc-ink);
  text-shadow:0 0 6px #fff,0 0 12px #fff;pointer-events:none;transition:opacity .8s;padding:0 1rem}
 .dc-walk{position:fixed;left:50%;bottom:calc(3.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);touch-action:none;user-select:none;-webkit-user-select:none;transition:opacity .6s}
-.dc-panel{position:fixed;left:50%;bottom:2.5rem;transform:translate(-50%,calc(100% + 3rem));width:min(680px,100%);box-sizing:border-box;max-height:58vh;display:flex;flex-direction:column;
+.dc-panel{position:fixed;z-index:4;left:50%;bottom:2.5rem;transform:translate(-50%,calc(100% + 3rem));width:min(680px,100%);box-sizing:border-box;max-height:58vh;display:flex;flex-direction:column;
  background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(38,50,79,.15);
  transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .6s;padding:1rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px))}
-.dc-panel.on{transform:translate(-50%,0)}
+.dc-panel.on{z-index:6;transform:translate(-50%,0)}
 .dc-log{overflow:auto;flex:1;min-height:0;padding-right:.3rem}
 .dc-msg{margin:0 0 1rem;white-space:pre-wrap;overflow-wrap:anywhere}
 .dc-god{font:400 clamp(1.05rem,2.8vw,1.25rem)/1.5 var(--dc-serif)}
@@ -590,7 +590,7 @@ function css() {
 .dc-ev.blue{background:var(--dc-blue);color:#fff}
 .dc-bars.blue .dc-evhead,.dc-bars.blue .dc-evfoot,.dc-bars.blue .dc-evfoot b em,.dc-ev.blue .dc-it,.dc-ev.blue .dc-it p,.dc-ev.blue .dc-it a,.dc-bars.blue .dc-evhead .g,.dc-ev.blue .dc-it .n span,.dc-ev.blue .dc-evfoot b em{color:#fff}
 .dc-bars.blue .dc-evhead .g,.dc-ev.blue .dc-it p,.dc-ev.blue .dc-it .n span:last-child{color:rgba(255,255,255,.75)}
-.dc-why{flex:0 0 50vw;height:100vh;box-sizing:border-box;margin:calc(var(--imh) / 2 - 50vh) 0 0 clamp(80px,10vw,200px);background:var(--dc-blue);color:#fff;
+.dc-why{flex:0 0 41vw;height:100vh;box-sizing:border-box;margin:calc(var(--imh) / 2 - 50vh) 0 0 clamp(80px,10vw,200px);background:var(--dc-blue);color:#fff;
  overflow:hidden;padding:0}
 .dc-whyin::-webkit-scrollbar{display:none}
 #title{top:calc(3.6rem + env(safe-area-inset-top,0px))!important}
@@ -879,6 +879,10 @@ function church(page) {
   }
   function updateTags(dt) {
     let best = null, bestD = 1e9;
+    /* keep bubbles and visions away from the oracle's chat panel */
+    const pe = document.querySelector(".dc-panel.on"), pr = pe && pe.getBoundingClientRect();
+    const hitsPanel = (x, y, w, h) => pr && x + w / 2 > pr.left - 12 && x - w / 2 < pr.right + 12 && y > pr.top - 12 && y - h < pr.bottom + 12;
+    const inPanel = pr && mx >= pr.left && mx <= pr.right && my >= pr.top && my <= pr.bottom;
     for (const F of faithful) {
       const p = F.w.position, head = proj(p.x, F.w.userData.kneel ? 1.3 : 1.36, p.z - .12);
       F.next -= dt; F.head = null;
@@ -886,7 +890,7 @@ function church(page) {
       if (F.next <= 0) { F.on = !F.on; F.next = F.on ? 3 + Math.random() * 3.5 : 2 + Math.random() * 7; }
       F.head = head; F.sc = Math.max(innerWidth < 640 ? .85 : .6, Math.min(1.1, head.k / 230));
       const body = proj(p.x, .72, p.z - .05);
-      if (body && mx >= 0 && !drag) { const qx = (mx - body.x) / (.42 * body.k), qy = (my - body.y) / (.75 * body.k); if (qx * qx + qy * qy < 1 && body.d < bestD) { bestD = body.d; best = F; } }
+      if (body && mx >= 0 && !drag && !inPanel) { const qx = (mx - body.x) / (.42 * body.k), qy = (my - body.y) / (.75 * body.k); if (qx * qx + qy * qy < 1 && body.d < bestD) { bestD = body.d; best = F; } }
     }
     for (const F of faithful) {
       const h = F.head, hov = F === best;
@@ -894,8 +898,11 @@ function church(page) {
         const pos2 = `translate(${h.x.toFixed(1)}px, ${(h.y - 8 * F.sc).toFixed(1)}px) translate(-50%, -100%) scale(${F.sc.toFixed(3)})`;
         F.b.style.transform = pos2; if (hov) F.v.style.transform = `translate(${h.x.toFixed(1)}px, ${(h.y - 8 * F.sc).toFixed(1)}px) translate(-50%, -100%) scale(${Math.max(.85, F.sc).toFixed(3)})`;
       }
-      F.b.classList.toggle("on", !!h && F.on && !hov);
-      F.v.classList.toggle("on", !!h && hov);
+      const bw = F.b.offsetWidth * (h ? F.sc : 1), bh = F.b.offsetHeight * (h ? F.sc : 1), vs = h ? Math.max(.85, F.sc) : 1;
+      const offB = h && hitsPanel(h.x, h.y - 8 * F.sc, Math.max(bw, 180), Math.max(bh, 40));
+      const offV = h && hitsPanel(h.x, h.y - 8 * F.sc, (F.v.offsetWidth || 260) * vs, (F.v.offsetHeight || 260) * vs);
+      F.b.classList.toggle("on", !!h && F.on && !hov && !offB);
+      F.v.classList.toggle("on", !!h && hov && !offV);
     }
     cv.style.cursor = best ? "pointer" : "";
   }
@@ -1274,16 +1281,16 @@ function evidence(page) {
   row.appendChild(why);
   let shown = false;
   let lastDir = 1;
-  const tone = () => { const wr = why.getBoundingClientRect(), l = wr.left, iw = innerWidth; setBar(l < innerWidth * .5 ? "purpose" : "evidence");
-    barEl.querySelectorAll("span,button,b").forEach(t => { const r = t.getBoundingClientRect(); t.classList.toggle("onblue", r.width > 0 && r.left + r.width / 2 > l && r.left + r.width / 2 < l + why.getBoundingClientRect().width); });
-    if (!shown && l < innerWidth * .6) { shown = true; wps.forEach((p, i) => setTimeout(() => p.classList.add("on"), reduce ? 0 : 200 + i * 1300)); } };
+  const tone = () => { const wr = why.getBoundingClientRect(), l = wr.left, iw = innerWidth; setBar(l < innerWidth * .62 ? "purpose" : "evidence");
+    barEl.querySelectorAll("span,button,b").forEach(t => { const r = t.getBoundingClientRect(); t.classList.toggle("onblue", r.width > 0 && r.left >= l - 2 && r.left < l + wr.width); });
+    if (!shown && l < innerWidth * .7) { shown = true; wps.forEach((p, i) => setTimeout(() => p.classList.add("on"), reduce ? 0 : 200 + i * 1300)); } };
   ss.addEventListener("scroll", tone); addEventListener("resize", tone);
   wrap.append(ss);
   /* scrolling the wheel down moves the row from right to left */
   let target = 0, raf = 0;
   /* the strip ends where the blue column meets the right edge (Safari can report extra scroll width) */
   const max = () => Math.max(0, Math.min(ss.scrollWidth - ss.clientWidth, ss.scrollLeft + why.getBoundingClientRect().right - ss.getBoundingClientRect().right));
-  function glide() { const d = target - ss.scrollLeft; if (Math.abs(d) < .5) { ss.scrollLeft = target; raf = 0; return; } ss.scrollLeft += d * (reduce ? 1 : .14); raf = requestAnimationFrame(glide); }
+  function glide() { const d = target - ss.scrollLeft; if (Math.abs(d) < .5) { ss.scrollLeft = target; raf = 0; tone(); return; } ss.scrollLeft += d * (reduce ? 1 : .14); raf = requestAnimationFrame(glide); }
   function goTo(x) { target = Math.max(0, Math.min(max(), x)); if (!raf) raf = requestAnimationFrame(glide); }
   function push(d) {
     const w = wrap.querySelector(".dc-whyin"), atEnd = target >= max() - 2, canDown = w && w.scrollTop < w.scrollHeight - w.clientHeight - 1;
