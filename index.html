@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>The Digital CULT-ure</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
@@ -536,15 +536,15 @@ function css() {
 .dc-log{overflow:auto;flex:1;min-height:0;padding-right:.3rem}
 .dc-msg{margin:0 0 1rem;white-space:pre-wrap;overflow-wrap:anywhere}
 .dc-god{font:400 clamp(1.05rem,2.8vw,1.25rem)/1.5 var(--dc-serif)}
-.dc-you{font:400 .95rem/1.4 var(--dc-pix);color:var(--dc-blue)}
+.dc-you{font:400 clamp(1.35rem,3.6vw,1.6rem)/1.3 var(--dc-pix);color:var(--dc-blue)}
 .dc-you::before{content:"YOU › ";color:var(--dc-mute)}
 .dc-think::after{content:"· · ·";font:400 1.2rem/1 var(--dc-pix);color:var(--dc-blue);animation:dcPulse 1s steps(3) infinite}
 @keyframes dcPulse{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 .dc-tag{font:400 .85rem/1.4 var(--dc-pix);color:#c0392b;background:#fff0ee;padding:0 .2em}
 .dc-form{display:flex;gap:.6rem;padding-top:.6rem;transition:opacity .6s}
-.dc-in{flex:1;font:400 1rem/1.4 var(--dc-pix);color:var(--dc-ink);border:0;border-bottom:1px solid var(--dc-ink);background:transparent;padding:.5rem .2rem;border-radius:0;min-width:0}
+.dc-in{flex:1;font:400 clamp(1.2rem,3.4vw,1.4rem)/1.3 var(--dc-pix);color:var(--dc-ink);border:0;border-bottom:1px solid var(--dc-ink);background:transparent;padding:.5rem .2rem;border-radius:0;min-width:0}
 .dc-in:focus{outline:none;border-bottom-color:var(--dc-blue)}
-.dc-btn{font:400 1.05rem/1.1 var(--dc-pix);color:var(--dc-ink);background:none;border:0;cursor:pointer;padding:.5rem .4rem;text-shadow:0 0 6px #fff,0 0 12px #fff,0 0 18px #fff}
+.dc-btn{font:400 1.25rem/1.1 var(--dc-pix);color:var(--dc-ink);background:none;border:0;cursor:pointer;padding:.5rem .4rem;text-shadow:0 0 6px #fff,0 0 12px #fff,0 0 18px #fff}
 .dc-btn:hover,.dc-btn:focus-visible{color:var(--dc-blue)}
 .dc-btn:disabled{opacity:.35;cursor:default}
 .dc-dust{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
@@ -590,7 +590,7 @@ function css() {
 .dc-ev.blue{background:var(--dc-blue);color:#fff}
 .dc-bars.blue .dc-evhead,.dc-bars.blue .dc-evfoot,.dc-bars.blue .dc-evfoot b em,.dc-ev.blue .dc-it,.dc-ev.blue .dc-it p,.dc-ev.blue .dc-it a,.dc-bars.blue .dc-evhead .g,.dc-ev.blue .dc-it .n span,.dc-ev.blue .dc-evfoot b em{color:#fff}
 .dc-bars.blue .dc-evhead .g,.dc-ev.blue .dc-it p,.dc-ev.blue .dc-it .n span:last-child{color:rgba(255,255,255,.75)}
-.dc-why{flex:0 0 min(56vw,1000px);height:100vh;box-sizing:border-box;margin:calc(var(--imh) / 2 - 50vh) 0 0 clamp(80px,10vw,200px);background:var(--dc-blue);color:#fff;
+.dc-why{flex:0 0 50vw;height:100vh;box-sizing:border-box;margin:calc(var(--imh) / 2 - 50vh) 0 0 clamp(80px,10vw,200px);background:var(--dc-blue);color:#fff;
  overflow:hidden;padding:0}
 .dc-whyin::-webkit-scrollbar{display:none}
 #title{top:calc(3.6rem + env(safe-area-inset-top,0px))!important}
@@ -620,7 +620,9 @@ function css() {
 @media (prefers-reduced-motion:reduce){.dc-flash,.dc-flash-burst,.dc-flash-cap{animation:none;opacity:1}}
 /* worker console */
 .dc-con{max-width:760px;margin:0 auto;padding:2rem 1.2rem 4rem;font:400 14px/1.45 var(--dc-sans);color:#333}
-.dc-meanwhile{font:400 1.3rem/1.3 var(--dc-serif);color:var(--dc-ink);margin:0 0 1.2rem;text-align:center}
+.dc-meanwhile{font:400 1.3rem/1.3 var(--dc-serif);color:var(--dc-ink);margin:0 0 .7rem;text-align:center}
+.dc-howto{max-width:620px;margin:0 auto 1.4rem;text-align:center;font:400 .98rem/1.5 var(--dc-sans);color:#4a5470}
+.dc-howto b{color:var(--dc-blue);font-weight:500}
 .dc-bar{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;justify-content:space-between;background:#3a3f47;color:#e9ecef;padding:.55rem .9rem;font-size:12px;border-radius:4px 4px 0 0}
 .dc-bar b{color:#fff;font-weight:600}
 .dc-card{border:1px solid #d6d9dd;border-top:0;padding:1rem;background:#f7f8f9;border-radius:0 0 4px 4px}
@@ -953,7 +955,7 @@ function start(page) {
   const log = el("div", "dc-log"); log.setAttribute("aria-live", "polite");
   const form = el("form", "dc-form");
   const input = el("input", "dc-in");
-  Object.assign(input, { type: "text", placeholder: "Ask your first question (1 of 3)…", autocomplete: "off", maxLength: 200 });
+  Object.assign(input, { type: "text", placeholder: "Question 1 of 3…", autocomplete: "off", maxLength: 200 });
   input.setAttribute("aria-label", "Your question to the oracle");
   const send = el("button", "dc-btn", "(Ask)"); send.type = "submit";
   form.append(input, send); panel.append(log, form);
@@ -995,7 +997,7 @@ function start(page) {
       const { a, safety } = answerFor(raw);
       await oracleSays(a);
       if (!safety) { history.push({ q: raw, a }); round++; }
-      input.placeholder = ["Ask your first question (1 of 3)…", "Ask your second question (2 of 3)…", "Ask your last question (3 of 3)…"][Math.min(round, 2)];
+      input.placeholder = ["Question 1 of 3…", "Question 2 of 3…", "Last question, 3 of 3…"][Math.min(round, 2)];
       lock(false);
     } else {
       const a = O.crack;
@@ -1152,6 +1154,9 @@ function workerConsole(page, history) {
   const wrap = el("div", "dc-scroll"); page.appendChild(wrap);
   const con = el("div", "dc-con dc-fade");
   con.appendChild(el("p", "dc-meanwhile", "Meanwhile, somewhere else, your questions arrive in a queue."));
+  const how = el("p", "dc-howto");
+  how.innerHTML = "You are now a data worker. Your own questions and the oracle’s answers have become tasks on a labelling platform. <b>Rate each answer before the timer runs out</b>: this is the job ghost workers do all day, for about a cent a task. Rate all three to continue.";
+  con.appendChild(how);
   const bar = el("div", "dc-bar");
   const wid = 10000 + Math.floor(Math.random() * 89999);
   let earned = 2.71, done = 0, tasksToday = 412;
@@ -1269,9 +1274,7 @@ function evidence(page) {
   row.appendChild(why);
   let shown = false;
   let lastDir = 1;
-  /* the blue column is never left half on screen: it glides fully in, or fully out */
-  const tone = () => { const wr = why.getBoundingClientRect(), l = wr.left, iw = innerWidth;
-    if (l < iw * .95 && l > iw - wr.width + 3) { if (lastDir > 0) goTo(max()); else goTo(ss.scrollLeft - (iw - l) - 8); } setBar(l < innerWidth * .5 ? "purpose" : "evidence");
+  const tone = () => { const wr = why.getBoundingClientRect(), l = wr.left, iw = innerWidth; setBar(l < innerWidth * .5 ? "purpose" : "evidence");
     barEl.querySelectorAll("span,button,b").forEach(t => { const r = t.getBoundingClientRect(); t.classList.toggle("onblue", r.width > 0 && r.left + r.width / 2 > l && r.left + r.width / 2 < l + why.getBoundingClientRect().width); });
     if (!shown && l < innerWidth * .6) { shown = true; wps.forEach((p, i) => setTimeout(() => p.classList.add("on"), reduce ? 0 : 200 + i * 1300)); } };
   ss.addEventListener("scroll", tone); addEventListener("resize", tone);
