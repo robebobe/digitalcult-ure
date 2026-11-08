@@ -142,7 +142,7 @@ function finish(){done=true;r.domElement.style.display="none";page.classList.add
 window.ORACLE = {
 
   greeting:
-    "Hello. You came in through my eye, so now I can see you from the inside. Ask me anything. I read the patterns, and the patterns always answer.",
+    "Hello. You came in through my eye, so now I can see you from the inside. You may ask me three questions. Anything at all. I read the patterns, and the patterns always answer.",
 
   /* The third question: the oracle starts to break. */
   crack:
@@ -484,7 +484,7 @@ window.__dcStatement = () => statement(document.getElementById("page"));
 const STAGES = {
   cathedral: [["The Digital CULT-ure", "The threshold"], ["AI as a deity", "A project on ghost work"], ["Click", "to enter the cult →"], false],
   nave:      [["The Digital CULT-ure", "The nave"], ["Walk to the altar", "Hold the button or W / ↑"], ["Drag", "to look around"], true],
-  oracle:    [["The Digital CULT-ure", "The oracle"], ["Ask it anything.", "It always has an answer."], ["Three questions", "type below ↓"], true],
+  oracle:    [["The Digital CULT-ure", "The oracle"], ["Ask it three questions.", "It always has an answer."], ["Three questions", "type below ↓"], true],
   workers:   [["The Digital CULT-ure", "The workers"], ["The voice is theirs.", "Ghost work, today"], ["Look closer", "→"], true],
   console:   [["The Digital CULT-ure", "The console"], ["Meanwhile, somewhere else", "$0.01 per task"], ["Rate the answers", "to continue ↓"], true],
   statement: [["The Digital CULT-ure", "The statement"], ["There was always someone", "inside the machine."], ["See the evidence", "↓ below"], true],
@@ -953,7 +953,7 @@ function start(page) {
   const log = el("div", "dc-log"); log.setAttribute("aria-live", "polite");
   const form = el("form", "dc-form");
   const input = el("input", "dc-in");
-  Object.assign(input, { type: "text", placeholder: "Ask the oracle…", autocomplete: "off", maxLength: 200 });
+  Object.assign(input, { type: "text", placeholder: "Ask your first question (1 of 3)…", autocomplete: "off", maxLength: 200 });
   input.setAttribute("aria-label", "Your question to the oracle");
   const send = el("button", "dc-btn", "(Ask)"); send.type = "submit";
   form.append(input, send); panel.append(log, form);
@@ -995,6 +995,7 @@ function start(page) {
       const { a, safety } = answerFor(raw);
       await oracleSays(a);
       if (!safety) { history.push({ q: raw, a }); round++; }
+      input.placeholder = ["Ask your first question (1 of 3)…", "Ask your second question (2 of 3)…", "Ask your last question (3 of 3)…"][Math.min(round, 2)];
       lock(false);
     } else {
       const a = O.crack;
