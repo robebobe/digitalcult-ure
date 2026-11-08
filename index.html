@@ -1280,6 +1280,10 @@ function evidence(page) {
   ]);
   const cases = []; for (const g of EVIDENCE) for (const c of g.cases) cases.push([c.src + ", “" + c.title.replace(/[“”]/g, "") + "”, " + c.when, c.url]);
   list("The cases", cases);
+  list("The 3D model", [
+    ["“Kölner_ Dom_ Texture_klein” by JensTiburski, Sketchfab", "https://skfb.ly/pFxqY"],
+    ["Licensed under Creative Commons Attribution 4.0 (CC BY 4.0)", "http://creativecommons.org/licenses/by/4.0/"]
+  ]);
   whyIn.appendChild(srcBox);
   row.appendChild(why);
   let shown = false;
