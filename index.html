@@ -503,6 +503,7 @@ function setBar(stage) {
   const st = STAGES[stage]; if (!st) return;
   barEl._cols.forEach((c, i) => { c.children[0].textContent = st[i][0]; c.children[1].textContent = st[i][1]; });
   barEl._back.hidden = !st[3];
+  if (stage !== "purpose" && stage !== "evidence") barEl.querySelectorAll(".onblue").forEach(t => t.classList.remove("onblue"));
   barEl.dataset.stage = stage;
 }
 function boot() {
@@ -528,7 +529,7 @@ function css() {
 .dc-hud{display:none;position:fixed;left:0;right:0;top:calc(4.4rem + env(safe-area-inset-top,0px));text-align:center;font:400 .95rem/1.4 var(--dc-pix);color:var(--dc-ink);
  text-shadow:0 0 6px #fff,0 0 12px #fff;pointer-events:none;transition:opacity .8s;padding:0 1rem}
 .dc-walk{position:fixed;left:50%;bottom:calc(3.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);touch-action:none;user-select:none;-webkit-user-select:none;transition:opacity .6s}
-.dc-panel{position:fixed;left:50%;bottom:2.5rem;transform:translate(-50%,calc(100% + 3rem));width:min(680px,100%);max-height:58vh;display:flex;flex-direction:column;
+.dc-panel{position:fixed;left:50%;bottom:2.5rem;transform:translate(-50%,calc(100% + 3rem));width:min(680px,100%);box-sizing:border-box;max-height:58vh;display:flex;flex-direction:column;
  background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(38,50,79,.15);
  transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .6s;padding:1rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px))}
 .dc-panel.on{transform:translate(-50%,0)}
@@ -561,7 +562,7 @@ function css() {
 .dc-cap.on{opacity:1}
 .dc-cap p{margin:0 0 .8rem;font:500 clamp(1.6rem,5vw,2.6rem)/1.15 var(--dc-serif);text-shadow:0 0 10px #fff,0 0 20px #fff,0 0 30px #fff,0 0 40px #fff}
 .dc-scroll{position:fixed;inset:3.4rem 0 2.5rem;overflow:auto}
-@media (max-width:640px){.dc-scroll{top:5.2rem}.dc-hud{top:calc(6rem + env(safe-area-inset-top,0px))}}
+@media (max-width:640px){.dc-scroll{top:3.4rem}.dc-hud{top:calc(6rem + env(safe-area-inset-top,0px))}}
 .dc-fade{animation:dcIn .9s ease both}
 @keyframes dcIn{from{opacity:0}to{opacity:1}}
 /* evidence: a quiet index of cases, one row moved by the scroll wheel */
@@ -593,7 +594,7 @@ function css() {
  overflow:hidden;padding:0}
 .dc-whyin::-webkit-scrollbar{display:none}
 #title{top:calc(3.6rem + env(safe-area-inset-top,0px))!important}
-@media (max-width:640px){#title{top:calc(5.8rem + env(safe-area-inset-top,0px))!important}}
+@media (max-width:640px){#title{top:calc(3.4rem + env(safe-area-inset-top,0px))!important}.dc-bars .dc-evhead{grid-template-columns:1fr auto!important;padding:10px 12px}.dc-bars .dc-evhead>div:nth-child(2),.dc-bars .dc-evhead>div:nth-child(3){display:none}.dc-bars .dc-evhead button{justify-self:end;text-align:right}.dc-bars .dc-evfoot{padding-bottom:max(12px,env(safe-area-inset-bottom))}}
 .dc-whyin{height:100%;box-sizing:border-box;overflow-y:auto;scrollbar-width:none;padding:0 4vw}.dc-whyin::before{content:"";display:block;height:58vh}.dc-whyin::after{content:"";display:block;height:11vh}.dc-whyin>*{max-width:min(760px,100%);box-sizing:border-box;overflow-wrap:break-word}
 .dc-whysrc{margin-top:85vh;color:#fff}
 .dc-whysrc h3{margin:0 0 1rem;font:400 13px/1 var(--dc-pix);letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.8)}
@@ -881,7 +882,7 @@ function church(page) {
       F.next -= dt; F.head = null;
       if (!head || head.d > 9.5 || head.x < -150 || head.x > innerWidth + 150) continue;
       if (F.next <= 0) { F.on = !F.on; F.next = F.on ? 3 + Math.random() * 3.5 : 2 + Math.random() * 7; }
-      F.head = head; F.sc = Math.max(.6, Math.min(1.1, head.k / 230));
+      F.head = head; F.sc = Math.max(innerWidth < 640 ? .85 : .6, Math.min(1.1, head.k / 230));
       const body = proj(p.x, .72, p.z - .05);
       if (body && mx >= 0 && !drag) { const qx = (mx - body.x) / (.42 * body.k), qy = (my - body.y) / (.75 * body.k); if (qx * qx + qy * qy < 1 && body.d < bestD) { bestD = body.d; best = F; } }
     }
@@ -1279,10 +1280,17 @@ function evidence(page) {
   const max = () => ss.scrollWidth - ss.clientWidth;
   function glide() { const d = target - ss.scrollLeft; if (Math.abs(d) < .5) { ss.scrollLeft = target; raf = 0; return; } ss.scrollLeft += d * (reduce ? 1 : .14); raf = requestAnimationFrame(glide); }
   function goTo(x) { target = Math.max(0, Math.min(max(), x)); if (!raf) raf = requestAnimationFrame(glide); }
-  wrap.addEventListener("wheel", e => { e.preventDefault(); const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  function push(d) {
     const w = wrap.querySelector(".dc-whyin"), atEnd = target >= max() - 2, canDown = w && w.scrollTop < w.scrollHeight - w.clientHeight - 1;
     if (w && atEnd && ((d > 0 && canDown) || (d < 0 && w.scrollTop > 0))) { w.scrollTop += d; return; }
-    lastDir = Math.sign(d) || lastDir; goTo(target + d * 1.2); }, { passive: false });
+    lastDir = Math.sign(d) || lastDir; goTo(target + d * 1.2);
+  }
+  wrap.addEventListener("wheel", e => { e.preventDefault(); push(Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX); }, { passive: false });
+  /* on phones, a swipe in any direction moves the row (and then the purpose text) */
+  let tx = 0, ty = 0;
+  wrap.addEventListener("touchstart", e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+  wrap.addEventListener("touchmove", e => { if (e.target.closest && e.target.closest("a")) return; const t = e.touches[0], dx = tx - t.clientX, dy = ty - t.clientY; tx = t.clientX; ty = t.clientY;
+    e.preventDefault(); push((Math.abs(dy) > Math.abs(dx) ? dy : dx) * 1.1); }, { passive: false });
   ss.addEventListener("scroll", () => { if (!raf) target = ss.scrollLeft; });
   const step = () => (row.querySelector(".dc-it") || row).getBoundingClientRect().width + 80;
   addEventListener("keydown", e => { if (!document.body.contains(ss)) return; if (["ArrowRight", "ArrowDown", "PageDown"].includes(e.key)) { e.preventDefault(); lastDir = 1; goTo(target + step()); } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); lastDir = -1; goTo(target - step()); } });
