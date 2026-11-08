@@ -528,7 +528,7 @@ function css() {
 .dc-3d:active{cursor:grabbing}
 .dc-hud{display:none;position:fixed;left:0;right:0;top:calc(4.4rem + env(safe-area-inset-top,0px));text-align:center;font:400 .95rem/1.4 var(--dc-pix);color:var(--dc-ink);
  text-shadow:0 0 6px #fff,0 0 12px #fff;pointer-events:none;transition:opacity .8s;padding:0 1rem}
-.dc-walk{position:fixed;left:50%;bottom:calc(3.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);touch-action:none;user-select:none;-webkit-user-select:none;transition:opacity .6s}
+.dc-walk{display:flex;gap:clamp(.6rem,3vw,1.6rem);align-items:center;white-space:nowrap;position:fixed;left:50%;bottom:calc(3.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);touch-action:none;user-select:none;-webkit-user-select:none;transition:opacity .6s}
 .dc-panel{position:fixed;z-index:4;left:50%;bottom:2.5rem;transform:translate(-50%,calc(100% + 3rem));width:min(680px,100%);box-sizing:border-box;max-height:58vh;display:flex;flex-direction:column;
  background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(38,50,79,.15);
  transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .6s;padding:1rem 1.2rem calc(.6rem + env(safe-area-inset-bottom,0px))}
@@ -909,7 +909,7 @@ function church(page) {
 
   /* --- walking --- */
   const pos = new T.Vector3(0, 1.65, 26.5);
-  let yaw = 0, pitch = .04, run = true, hold = false, drag = false, lx = 0, ly = 0, t = 0;
+  let yaw = 0, pitch = .04, run = true, hold = false, side = 0, drag = false, lx = 0, ly = 0, t = 0;
   const keys = {};
   const kd = e => { if (e.target && e.target.tagName === "INPUT") return; keys[e.key.toLowerCase()] = true; };
   const ku = e => { keys[e.key.toLowerCase()] = false; };
@@ -921,16 +921,16 @@ function church(page) {
   function size() { r.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
   size(); addEventListener("resize", size);
   let last = performance.now();
-  const api = { near: false, onNear: null, setHold: v => { hold = v; }, distance: () => pos.z - 1.6 };
+  const api = { near: false, onNear: null, setHold: v => { hold = v; }, setSide: v => { side = v; }, distance: () => pos.z - 1.6 };
   (function loop(now) {
     if (!run) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
     const fwd = (keys["w"] || keys["arrowup"] || hold ? 1 : 0) - (keys["s"] || keys["arrowdown"] ? 1 : 0);
-    const turn = (keys["a"] || keys["arrowleft"] ? 1 : 0) - (keys["d"] || keys["arrowright"] ? 1 : 0);
-    yaw += turn * 1.5 * dt;
-    pos.x += -Math.sin(yaw) * fwd * 3 * dt; pos.z += -Math.cos(yaw) * fwd * 3 * dt;
+    /* A / D, ← / → and the side buttons step left and right; dragging turns the head */
+    const strafe = (keys["d"] || keys["arrowright"] ? 1 : 0) - (keys["a"] || keys["arrowleft"] ? 1 : 0) + side;
+    pos.x += -Math.sin(yaw) * fwd * 3 * dt + Math.cos(yaw) * strafe * 2.4 * dt; pos.z += -Math.cos(yaw) * fwd * 3 * dt - Math.sin(yaw) * strafe * 2.4 * dt;
     pos.x = Math.max(-3.3, Math.min(3.3, pos.x)); pos.z = Math.max(4.2, Math.min(27, pos.z));
-    cam.position.set(pos.x, pos.y + (fwd ? Math.sin(t * 7) * .025 : 0), pos.z);
+    cam.position.set(pos.x, pos.y + (fwd || strafe ? Math.sin(t * 7) * .025 : 0), pos.z);
     cam.rotation.order = "YXZ"; cam.rotation.y = yaw; cam.rotation.x = pitch;
     eye.lookAt(cam.position); eye.position.y = EYE_Y + Math.sin(t * .9) * .06;
     for (const w of flock) { const u = w.userData, k = t * u.speed + u.phase; u.torso.rotation.x = u.base + Math.sin(k) * (u.kneel ? .1 : .06); u.neck.rotation.x = -.55 + Math.sin(k * 1.7 + 1) * .09; u.ph.rotation.z = Math.sin(k * 2.3) * .12; }
@@ -951,13 +951,16 @@ function start(page) {
   page.innerHTML = "";
   const world = church(page);
 
-  const hud = el("div", "dc-hud", world ? "Walk to the altar · hold the button or use W / ↑ · drag to look around" : "");
-  const walk = el("button", "dc-btn dc-walk", "(Hold to walk)"); walk.type = "button";
-  if (world) {
-    const on = e => { e.preventDefault(); world.setHold(true); }, off = () => world.setHold(false);
-    walk.addEventListener("pointerdown", on); walk.addEventListener("pointerup", off); walk.addEventListener("pointerleave", off); walk.addEventListener("pointercancel", off);
-    walk.addEventListener("contextmenu", e => e.preventDefault());
-  }
+  const hud = el("div", "dc-hud", world ? "Walk to the altar · hold (Walk) or use W / ↑ · move sideways with ← → or A / D · drag to look around" : "");
+  const walk = el("div", "dc-walk");
+  const mk = (label, aria, set) => { const b = el("button", "dc-btn", label); b.type = "button"; b.setAttribute("aria-label", aria);
+    if (world) { const on = e => { e.preventDefault(); set(true); }, off = () => set(false);
+      b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off);
+      b.addEventListener("contextmenu", e => e.preventDefault()); }
+    walk.appendChild(b); return b; };
+  mk("(←)", "Hold to move left", v => world.setSide(v ? -1 : 0));
+  mk("(Hold to walk)", "Hold to walk forward", v => world.setHold(v));
+  mk("(→)", "Hold to move right", v => world.setSide(v ? 1 : 0));
   const panel = el("div", "dc-panel");
   const log = el("div", "dc-log"); log.setAttribute("aria-live", "polite");
   const form = el("form", "dc-form");
